@@ -140,7 +140,7 @@ class Grammar:
 
     def first_of_sequence(self, symbols: tuple[str, ...]) -> set[str]:
         """Calcule FIRST para uma sequência de zero ou mais símbolos."""
-        raise NotImplementedError("implemente FIRST de uma sequência")
+        
 
     def build_first(self) -> None:
         """Preencha self.first por iteração até um ponto fixo."""
@@ -161,7 +161,35 @@ class Grammar:
 
     def eliminate_direct_left_recursion(self, nonterminal: str) -> bool:
         """Elimine a recursão direta de um não terminal, se existir."""
-        raise NotImplementedError("implemente a remoção de recursão direta")
+        productions = self.productions_for(nonterminal)
+
+        alphas: list[tuple[str, ...]] = []
+        betas: list[tuple[str, ...]] = []
+
+        # Separa alpha e beta
+        for prod in productions:
+            if prod.rhs and prod.rhs[0] == nonterminal:
+                alphas.append(prod.rhs[1:])
+            else:
+                betas.append(prod.rhs)
+
+        if not alphas:
+            return False
+
+        # Cria um novo não terminal para os alphas
+        helper = self._fresh_nonterminal(nonterminal)
+        self._insert_nonterminal_after(nonterminal, helper)
+
+        new_a = [beta + (helper,) for beta in betas]
+
+        new_helper = [alpha + (helper,) for alpha in alphas]
+        new_helper.append(())   # Adiciona épsilon para o novo não terminal
+
+        # Substitui produções
+        self._replace_productions(nonterminal, new_a)
+        self._replace_productions(helper, new_helper)
+
+        return True
 
     def eliminate_all_direct_left_recursion(self) -> None:
         for nonterminal in list(self.nonterminals):
