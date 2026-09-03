@@ -139,20 +139,81 @@ class Grammar:
         return candidate
 
     def first_of_sequence(self, symbols: tuple[str, ...]) -> set[str]:
+<<<<<<< Updated upstream
         """Calcule FIRST para uma sequência de zero ou mais símbolos."""
         
+=======
+        result = set()
+
+        if not symbols:
+            result.add(EPSILON)
+            return result
+        
+        for symbol in symbols:
+            if symbol not in self.nonterminals:
+                result.add(symbol)
+                break          
+            symbol_first = self.first.get(symbol, set())
+            result.update(symbol_first - {EPSILON})
+
+            if EPSILON not in symbol_first:
+                break
+        else:
+
+            result.add(EPSILON)
+>>>>>>> Stashed changes
 
     def build_first(self) -> None:
-        """Preencha self.first por iteração até um ponto fixo."""
-        raise NotImplementedError("implemente FIRST")
+        self.first = self._empty_sets_by_nonterminal()
+
+        changed = True
+        while changed:
+            changed = False
+            for production in self.productions:
+                rhs_first = self.first_of_sequence(production.rhs)
+
+                old_size = len(self.first[production.lhs])
+                self.first[production.lhs].update(rhs_first)
+
+                if len(self.first[production.lhs]) > old_size:
+                    changed = True
 
     def build_follow(self) -> None:
-        """Preencha self.follow; FIRST deve ter sido calculado antes."""
-        raise NotImplementedError("implemente FOLLOW")
+        self.follow = self._empty_sets_by_nonterminal()
+        self.follow[self.start_symbol].add(EOF)
+
+        changed = True
+        while changed:
+            for production in self.productions:
+                lhs = production.lhs
+                rhs = production.rhs
+
+                for i, symbol in enumerate(rhs):
+                    if symbol in self.nonterminals:
+                        beta = rhs[i+1:]
+                        first_of_beta = self.first_of_sequence(beta)
+
+                        old_size = len(self.follow[symbol])
+                        self.follow[symbol].update(first_of_beta - {EPSILON})
+
+                        if EPSILON in first_of_beta or not beta:
+                            self.follow[symbol].update(self.follow[lhs])
+
+                        if len(self.follow[symbol]) > old_size:
+                            changed = True
+
 
     def build_start(self) -> None:
-        """Associe a cada produção seu conjunto START."""
-        raise NotImplementedError("implemente START")
+        self.start = {}
+
+        for production in self.productions:
+            start_set = self.first_of_sequence(production.rhs)
+
+            if EPSILON in start_set:
+                start_set.remove(EPSILON)
+                start_set.update(self.follow[production.lhs])
+
+            self.start[production] = start_set
 
     def build_sets(self) -> None:
         self.build_first()
