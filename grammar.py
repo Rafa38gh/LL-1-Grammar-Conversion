@@ -139,10 +139,6 @@ class Grammar:
         return candidate
 
     def first_of_sequence(self, symbols: tuple[str, ...]) -> set[str]:
-<<<<<<< Updated upstream
-        """Calcule FIRST para uma sequência de zero ou mais símbolos."""
-        
-=======
         result = set()
 
         if not symbols:
@@ -159,9 +155,9 @@ class Grammar:
             if EPSILON not in symbol_first:
                 break
         else:
-
             result.add(EPSILON)
->>>>>>> Stashed changes
+
+        return result
 
     def build_first(self) -> None:
         self.first = self._empty_sets_by_nonterminal()
@@ -184,6 +180,7 @@ class Grammar:
 
         changed = True
         while changed:
+            changed = False
             for production in self.productions:
                 lhs = production.lhs
                 rhs = production.rhs
